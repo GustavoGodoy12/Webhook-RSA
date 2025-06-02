@@ -1,12 +1,4 @@
-// rsa_puro.js
-// Implementação didática de RSA: geração de chaves, cifra/decifra, assina/verifica
-// NÃO usa o módulo 'crypto'. Usa apenas BigInt, Math.random e Buffer.
-// ─────────────────────────────────── AVISO ───────────────────────────────────
-//   • NÃO fornece segurança real (Math.random não é CSPRNG, sem OAEP/PSS, etc.).
-//   • Use apenas para fins acadêmicos ou de laboratório.
-// ──────────────────────────────────────────────────────────────────────────────
 
-// ───────── utilidades BigInt ─────────
 function randomBigInt(bits) {
   const bytes = Math.ceil(bits / 8);
   let n = 0n;
@@ -44,7 +36,7 @@ const modInv = (x, m) => {
   return (a % m + m) % m;
 };
 
-// ───────── primalidade (Miller-Rabin) ─────────
+// primalidade (Miller-Rabin)
 const smallPrimes = [3n, 5n, 7n, 11n, 13n, 17n, 19n, 23n, 29n, 31n, 37n];
 
 function isProbablePrime(n, k = 8) {

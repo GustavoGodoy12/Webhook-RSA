@@ -13,7 +13,7 @@ const rsa = require('./rsa_puro');
 const PORT = process.env.PORT || 5000;
 
 (async () => {
-  // ───────── entrada de teclado assíncrona ─────────
+  // entrada de teclado assíncrona 
   const rl  = readline.createInterface({ input: process.stdin, output: process.stdout });
   const ask = q => new Promise(res => rl.question(q, ans => res(ans)));
 
@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 5000;
     .trim()
     .replace(/\/$/, '');
 
-  // ───────── chaves locais ─────────
+  // chaves locais 
   const [myPub, myPriv] = rsa.generate_keypair(); // padrão: 512 bits
   let peerPub = null;
   let hasSentPubOnce = false;
@@ -45,7 +45,7 @@ const PORT = process.env.PORT || 5000;
     }
   }
 
-  // ───────── servidor HTTP ─────────
+  // servidor HTTP 
   const app = express();
   app.use(express.json());
 
@@ -87,7 +87,7 @@ const PORT = process.env.PORT || 5000;
     res.json({ status: 'ok' });
   });
 
-  // ───────── inicia servidor + tentativas de handshake ─────────
+  // inicia servidor + tentativas de handshake 
   app.listen(PORT, async () => {
     console.log(`🔒 [${PORT}] Chat HTTP rodando em http://localhost:${PORT}`);
     await trySendMyPub();
@@ -96,7 +96,7 @@ const PORT = process.env.PORT || 5000;
     }, 3000);
   });
 
-  // ───────── loop de envio (não bloqueia) ─────────
+  // loop de envio (não bloqueia) 
   rl.on('line', async txt => {
     if (!txt.trim()) return;
     if (!peerPub) { console.log(`⌛ [${PORT}] Aguardando chave pública do peer...`); return; }
