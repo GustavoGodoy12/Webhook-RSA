@@ -1,5 +1,12 @@
-// chat_http.js
-// Chat HTTP assíncrono + RSA em JS puro (usa express, fetch, readline)
+//O script inicializa um servidor HTTP em Express e, simultaneamente, 
+// cria um par de chaves RSA local; ele pede ao usuário a URL do peer e 
+// tenta periodicamente enviar sua chave pública em um POST para /msg até receber, do outro lado, 
+// a chave pública oposta. A rota POST /msg funciona como um webhook interno que, ao receber {pub}, 
+// armazena a chave pública do peer e devolve a própria, ou, ao receber {c, s},
+//  descriptografa a mensagem com a chave privada local, verifica a assinatura usando a 
+// chave pública do peer e exibe o texto no console. Quando o usuário digita algo no terminal, 
+// o código criptografa e assina a mensagem com RSA antes de enviá-la ao peer via POST para /msg, garantindo confidencialidade e
+// autenticidade em todo o fluxo.
 
 const express  = require('express');
 const readline = require('readline');
@@ -14,8 +21,10 @@ const PORT = process.env.PORT || 5000;
 
 //aqui criei uma função principal assíncrona que inicia o chat
 (async () => {
+  //garanto input
   //cria uma interface de leitura baseada no process.stdin e process.stdout , que garante o input e output do terminal processando linha por linha
   const rl  = readline.createInterface({ input: process.stdin, output: process.stdout });
+  //aguarda resposta
   //define uma funcao do ask que recebe um prompt q e aguarda até que o usuário digite uma resposta, e retorna como uma promisse
   const ask = q => new Promise(res => rl.question(q, ans => res(ans)));
 
@@ -66,14 +75,15 @@ const PORT = process.env.PORT || 5000;
   app.use(express.json());
 
   app.post('/msg', async (req, res) => {
-    //aqui na mensagem eu divido o corpo da req, pub = quando o peer envia a chave pública dele, c = quando envia uma mensagem cifrada, 
+    //JSON RECEBIDO =  COM 3 CAMPOS QUE TEM QUE SER EXTRAIDOS
+    // aqui na mensagem eu divido o corpo da req, pub = quando o peer envia a chave pública dele, c = quando envia uma mensagem cifrada, 
     // s = assinatura condiz com a a mensagem cifrada
     const { pub, c, s } = req.body;
 
-    //vejo se não recebi nenhuma ainda e se o pub ta preenchido com a chave publica 
+    //vejo se não recebi nenhuma chave ainda ainda e se o pub ta preenchido com a chave publica 
     if (pub && !peerPub) {
       //converto de novo para bigint, e ai o objeto peerPub recebe a chave pública do peer. uso para o E/N para ser usada depois
-      // para criptografar e verificar mensagens
+      //para criptografar e verificar mensagens
       peerPub = { e: BigInt(pub.e), n: BigInt(pub.n) };
       console.log(`▶ [${PORT}] Chave pública do peer recebida!`);
 
@@ -129,10 +139,12 @@ const PORT = process.env.PORT || 5000;
     if (!txt.trim()) return;
     if (!peerPub) { console.log(`⌛ [${PORT}] Aguardando chave pública do peer...`); return; }
 
+    //sempre que o peer manda algo, tanto uma chave publica ou mensagem cifrada ele faz o post para /msg
+
     //uso a funcao do encrypt passando o txt e a chave public do peer - o C é a mensagem cifrada
     try {
       const c = rsa.encrypt(txt, peerPub);
-      //o objeto s da assinatura que será verificada 
+      //o objeto s da assinatura que será verificada
       const s = rsa.sign(txt, myPriv);
       await fetchFn(`${PEER_URL}/msg`, {
         method: 'POST',
